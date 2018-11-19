@@ -3,7 +3,11 @@ class Movie < ApplicationRecord
   belongs_to :user
 
   validates :title, presence: true, uniqueness: true
-  validates_numericality_of :rank, only_integer: true, greater_than: 0
+  # validates_numericality_of :rank, only_integer: true, greater_than: 0
+
+  def self.top_6
+    order(rank: :asc).limit(6)
+  end
 
   private
 

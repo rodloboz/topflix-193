@@ -1,10 +1,12 @@
 class MoviesController < ApplicationController
   before_action :set_movie, only: [:show, :edit, :update, :destroy]
+  after_action :verify_authorized, except: [:index, :top], unless: :skip_pundit?
+  after_action :verify_policy_scoped, only: [:index, :top], unless: :skip_pundit?
 
   # GET /movies
   # GET /movies.json
   def index
-    @movies = Movie.all
+    @movies = policy_scope(Movie).order(rank: :asc)
   end
 
   # GET /movies/1
@@ -15,6 +17,7 @@ class MoviesController < ApplicationController
   # GET /movies/new
   def new
     @movie = Movie.new
+    authorize @movie
   end
 
   # GET /movies/1/edit
@@ -25,6 +28,8 @@ class MoviesController < ApplicationController
   # POST /movies.json
   def create
     @movie = Movie.new(movie_params)
+    @movie.user = current_user
+    authorize @movie
 
     respond_to do |format|
       if @movie.save
@@ -61,10 +66,17 @@ class MoviesController < ApplicationController
     end
   end
 
+  def top
+    @movies = policy_scope(Movie).top_6
+
+    render :index
+  end
+
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_movie
       @movie = Movie.find(params[:id])
+      authorize @movie
     end
 
     # Never trust parameters from the scary internet, only allow the white list through.
